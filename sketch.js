@@ -1,0 +1,270 @@
+let context, freq1, freq2, gain, tremRate, downsampler, clickTog, clickRate, clickLvl, noiseLvl, verbMix;
+
+let nowhere;
+let xoff = 0;
+let whisperText = "Voidspire Hallowedshade Etherfall Grimclave Dreadveil Spectroweave Tenebrous Murkmind Eclipsum Voidspire Hallowedshade Etherfall Grimclave Dreadveil Spectroweave Tenebrous Murkmind Eclipsum";
+let lines = [];
+let roses = [];
+let currentLine = "";
+let charIndex = 0;
+let startTime = 0;
+const typingDuration = 12000;
+let poppy_images = [];
+let currentPoppyIndex = 0;
+let currentRoseIndex = 0;
+let roseStartTime = 0;
+let lastPoppyChangeTime = 0;
+let flash = false;
+let grayScale = false;
+let state = 1;
+let state2StartTime = 0;
+let barcodeFont;
+let srcCodePro;
+let freq2Set = false;
+
+
+async function setupRNBO() {
+  const audioContext = window.AudioContext || window.webkitAudioContext;
+  context = new audioContext();
+
+  // Fetch the exported patchers
+  let response = await fetch("./rnbo_3/rnbo_p5.export.json");
+  const mainPatcher = await response.json();
+  response = await fetch("./rnbo_3/rnbo.platereverb.json");
+  const reverbPatcher = await response.json();
+
+  // Create the devices
+  const mainDevice = await RNBO.createDevice({ context, patcher: mainPatcher });
+  const reverbDevice = await RNBO.createDevice({ context, patcher: reverbPatcher });
+
+  // Connecting the devices and context
+  mainDevice.node.connect(reverbDevice.node);
+  reverbDevice.node.connect(context.destination);
+
+  // Set the parameters
+  verbMix = reverbDevice.parametersById.get("mix");
+  verbMix.value = 28;
+
+  freq1 = mainDevice.parametersById.get("freq1");
+  freq1.value = 120;
+
+  freq2 = mainDevice.parametersById.get("freq2");
+  freq2.value = 275;
+
+  gain = mainDevice.parametersById.get("gain");
+  gain.value = 100;
+
+  tremRate = mainDevice.parametersById.get("tremRate");
+  tremRate.value = 8;
+
+  clickTog = mainDevice.parametersById.get("clickTog");
+  clickTog.value = 1;
+
+  clickRate = mainDevice.parametersById.get("clickRate");
+  clickRate.value = 200;
+
+  clickLvl = mainDevice.parametersById.get("clickLvl");
+  clickLvl.value = 1;
+
+  downsampler = mainDevice.parametersById.get("downsampler");
+  downsampler.value = 0;
+
+  noiseLvl = mainDevice.parametersById.get("noiseLvl");
+  noiseLvl.value = 1;
+
+
+  context.suspend();
+}
+
+function startAudio() {
+  context.resume();
+}
+
+function stopAudio() {
+  context.suspend();
+}
+
+function toggleLoop() {
+  if (isLooping) {
+    noLoop();
+  } else {
+    loop();
+  }
+  isLooping = !isLooping;
+}
+
+
+function preload() {
+  barcodeFont = loadFont('fonts/LibreBarcode128Text-Regular.ttf');
+  srcCodePro = loadFont('fonts/SourceCodePro-VariableFont_wght.ttf');
+  nowhere = loadImage('assets/nowhere.png');
+  for (let i = 1; i <= 12; i++) {
+    poppy_images.push(loadImage(`assets/poppies/poppy_${i}.png`));
+  }
+  for (let i = 1; i <= 3; i++) {
+    roses.push(loadImage(`assets/roses/rose_${i}.png`));
+  }
+}
+
+
+async function setup() {
+  setupRNBO();
+  createCanvas(1080, 1440);
+  // createCanvas(windowWidth, windowHeight);
+  textFont(srcCodePro);
+  lines = loadStrings('assets/longText.txt');
+  pickRandomLine();
+  roseStartTime = millis();
+  downsampler = { value: 0 };
+  freq1 = { value: 120 };
+  freq2 = { value: 80 };
+  tremRate = { value: 8 };
+  noiseLvl = { value: 1 };
+}
+
+function draw() {
+  startAudio();
+  if (state === 1) {
+    drawState1();
+    displayRoses();
+  } else if (state === 2) {
+    drawState2();
+  }
+
+}
+
+
+// STATE 1
+function drawState1() {
+  background(0, 12);
+
+
+  // Image flasher
+  blendMode(DIFFERENCE);
+  if (flash && millis() - lastPoppyChangeTime > 50) { 
+    currentPoppyIndex = int(random(poppy_images.length));
+    lastPoppyChangeTime = millis();
+  }
+  image(poppy_images[currentPoppyIndex], 145, 287, 935, 720);
+
+
+  // Still gray state settings
+  if (grayScale) {
+    filter(GRAY);
+    tremRate.value = 0;
+    verbMix.value = 16;
+    if (!freq2Set) {
+      freq2.value = selectRandomOption(240, 320, 400, 480);
+      freq2Set = true;
+      console.log(freq2.value);
+    }
+  } else {
+    freq2Set = false;
+  }
+
+   // Line
+   xoff += 0.01;
+   for (let x = 0; x <= width; x += 5) {
+    let y = map(noise(xoff), 0, 1, 0, height);
+    ellipse(x, y, 5, 5);
+
+    downsampler.value = map(y, 0, height, 7, 0);
+    freq1.value = map(y, 0, height, 280, 20);
+  }
+3
+  // Text
+  textFont(srcCodePro);
+
+  if (frameCount % 600 == 0) {
+    pickRandomLine();
+  }
+
+  let elapsedTime = millis() - startTime;
+  charIndex = int(map(elapsedTime, 0, typingDuration, 0, currentLine.length));
+
+  // Selecting image flash/gray state
+  if (charIndex < currentLine.length) {
+    flash = false;
+    grayScale = true;
+  } else {
+    flash = true;
+    grayScale = false;
+    // Not sure if this is right... dont want it to keep selecting new values.. only once
+    tremRate.value = random(8, 16);
+  }
+
+  if (random(1) < 0.85) {
+    fill(255);
+    textSize(24);
+    textAlign(LEFT, TOP);
+    textWrap(WORD);
+    textLeading(38);
+    text(currentLine.substring(0, charIndex), 145, 1096, 460);
+  }
+  blendMode(BLEND);
+}
+
+
+// STATE 2
+function drawState2() {
+  background(0);
+  textFont(barcodeFont);
+
+  if (random(1) < 0.7) {
+    fill(255);
+    textSize(84);
+    textAlign(CENTER, CENTER);
+    text("who left the door open to nowhere", width / 2, height / 2);
+  }
+  downsampler.value = 32;
+  freq2.value = 100;
+}
+
+
+
+
+function pickRandomLine() {
+  if (lines.length > 0) {
+    currentLine = lines[int(random(lines.length))];
+    charIndex = 0;
+    startTime = millis();
+  }
+}
+
+
+function displayRoses() {
+  let elapsedTime = millis() - roseStartTime;
+  if (elapsedTime > currentRoseIndex * 400) {
+    image(roses[currentRoseIndex], 820, 1048 + currentRoseIndex * 120, 120, 120);
+    if (elapsedTime > (currentRoseIndex + 1) * 400) {
+      if (currentRoseIndex < 2) {
+        currentRoseIndex++;
+      } else {
+        currentRoseIndex = 0;
+        roseStartTime = millis();
+      }
+    }
+  }
+}
+
+
+
+
+
+// HELPER FUNCTIONS
+
+function keyPressed() {
+  if (key === '1') {
+    state = 1;
+  } else if (key === '2') {
+    state = 2;
+  } else if (key === '3') {
+    let fs = fullscreen();
+    fullscreen(!fs);
+  }
+}
+
+function selectRandomOption(...options) {
+  const randomIndex = Math.floor(Math.random() * options.length);
+  return options[randomIndex];
+}

@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "id": "whale_buf",
+    "file": "media/whaleg3.wav"
+  },
+  {
+    "id": "click_buf",
+    "file": "media/click.wav"
+  }
+]

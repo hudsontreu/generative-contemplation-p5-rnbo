@@ -1,6 +1,5 @@
 let context, freq1, freq2, gain, tremRate, downsampler, clickTog, clickRate, clickLvl, noiseLvl, verbMix;
-
-let nowhere;
+let barcodeFont, srcCodePro;
 let xoff = 0;
 let whisperText = "Voidspire Hallowedshade Etherfall Grimclave Dreadveil Spectroweave Tenebrous Murkmind Eclipsum Voidspire Hallowedshade Etherfall Grimclave Dreadveil Spectroweave Tenebrous Murkmind Eclipsum";
 let lines = [];
@@ -18,9 +17,8 @@ let flash = false;
 let grayScale = false;
 let state = 1;
 let state2StartTime = 0;
-let barcodeFont;
-let srcCodePro;
 let freq2Set = false;
+let tremRate2Set = false;
 
 
 async function setupRNBO() {
@@ -28,9 +26,9 @@ async function setupRNBO() {
   context = new audioContext();
 
   // Fetch the exported patchers
-  let response = await fetch("./rnbo_3/rnbo_p5.export.json");
+  let response = await fetch("./rnbo_4/rnbo_p5.export.json");
   const mainPatcher = await response.json();
-  response = await fetch("./rnbo_3/rnbo.platereverb.json");
+  response = await fetch("./rnbo_4/rnbo.platereverb.json");
   const reverbPatcher = await response.json();
 
   // Create the devices
@@ -38,7 +36,8 @@ async function setupRNBO() {
   const reverbDevice = await RNBO.createDevice({ context, patcher: reverbPatcher });
 
   // Connecting the devices and context
-  mainDevice.node.connect(reverbDevice.node);
+  mainDevice.node.connect(reverbDevice.node, 0, 0);
+  mainDevice.node.connect(reverbDevice.node, 0, 1);
   reverbDevice.node.connect(context.destination);
 
   // Set the parameters
@@ -58,39 +57,24 @@ async function setupRNBO() {
   tremRate.value = 8;
 
   clickTog = mainDevice.parametersById.get("clickTog");
-  clickTog.value = 1;
+  clickTog.value = 0;
 
   clickRate = mainDevice.parametersById.get("clickRate");
-  clickRate.value = 200;
+  clickRate.value = 100;
 
   clickLvl = mainDevice.parametersById.get("clickLvl");
-  clickLvl.value = 1;
+  clickLvl.value = 80;
 
   downsampler = mainDevice.parametersById.get("downsampler");
   downsampler.value = 0;
 
-  noiseLvl = mainDevice.parametersById.get("noiseLvl");
-  noiseLvl.value = 1;
+  // noiseLvl = mainDevice.parametersById.get("noiseLvl");
+  // noiseLvl.value = 100;
 
+  // noiseCutoff = mainDevice.parametersById.get("noiseCutoff");
+  // noiseCutoff.value = 1000;
 
   context.suspend();
-}
-
-function startAudio() {
-  context.resume();
-}
-
-function stopAudio() {
-  context.suspend();
-}
-
-function toggleLoop() {
-  if (isLooping) {
-    noLoop();
-  } else {
-    loop();
-  }
-  isLooping = !isLooping;
 }
 
 
@@ -106,7 +90,6 @@ function preload() {
   }
 }
 
-
 async function setup() {
   setupRNBO();
   createCanvas(1080, 1440);
@@ -118,20 +101,19 @@ async function setup() {
   downsampler = { value: 0 };
   freq1 = { value: 120 };
   freq2 = { value: 80 };
-  tremRate = { value: 8 };
-  noiseLvl = { value: 1 };
+  tremRate = { value: 4 };
+  clickTog = { value: 0 };
 }
 
 function draw() {
-  startAudio();
   if (state === 1) {
     drawState1();
     displayRoses();
   } else if (state === 2) {
     drawState2();
   }
-
 }
+
 
 
 // STATE 1
@@ -139,12 +121,19 @@ function drawState1() {
   background(0, 12);
 
 
-  // Image flasher
+  // Image flasher state settings
   blendMode(DIFFERENCE);
   if (flash && millis() - lastPoppyChangeTime > 50) { 
     currentPoppyIndex = int(random(poppy_images.length));
     lastPoppyChangeTime = millis();
-  }
+    clickTog.value = 0;
+    if (!tremRate2Set) {
+      tremRate.value = random(7, 12);
+      tremRate2Set = true;
+      console.log(tremRate.value);
+    } 
+  } 
+  if(!flash){ tremRate2Set = false };
   image(poppy_images[currentPoppyIndex], 145, 287, 935, 720);
 
 
@@ -153,14 +142,16 @@ function drawState1() {
     filter(GRAY);
     tremRate.value = 0;
     verbMix.value = 16;
+    clickTog.value = 1;
     if (!freq2Set) {
-      freq2.value = selectRandomOption(240, 320, 400, 480);
+      freq2.value = selectRandomOption(320, 400, 440, 480);
       freq2Set = true;
       console.log(freq2.value);
     }
   } else {
     freq2Set = false;
   }
+
 
    // Line
    xoff += 0.01;
@@ -171,27 +162,25 @@ function drawState1() {
     downsampler.value = map(y, 0, height, 7, 0);
     freq1.value = map(y, 0, height, 280, 20);
   }
-3
+
   // Text
   textFont(srcCodePro);
-
   if (frameCount % 600 == 0) {
     pickRandomLine();
   }
 
-  let elapsedTime = millis() - startTime;
-  charIndex = int(map(elapsedTime, 0, typingDuration, 0, currentLine.length));
 
-  // Selecting image flash/gray state
-  if (charIndex < currentLine.length) {
+   // Selecting image flash/gray state
+   if (charIndex < currentLine.length) {
     flash = false;
     grayScale = true;
   } else {
     flash = true;
     grayScale = false;
-    // Not sure if this is right... dont want it to keep selecting new values.. only once
-    tremRate.value = random(8, 16);
   }
+
+  let elapsedTime = millis() - startTime;
+  charIndex = int(map(elapsedTime, 0, typingDuration, 0, currentLine.length));
 
   if (random(1) < 0.85) {
     fill(255);
@@ -253,6 +242,25 @@ function displayRoses() {
 
 // HELPER FUNCTIONS
 
+function startAudio() {
+  context.resume();
+}
+
+function stopAudio() {
+  context.suspend();
+}
+
+function toggleLoop() {
+  if (isLooping) {
+    noLoop();
+    stopAudio();
+  } else {
+    loop();
+    startAudio();
+  }
+  isLooping = !isLooping;
+}
+
 function keyPressed() {
   if (key === '1') {
     state = 1;
@@ -268,3 +276,4 @@ function selectRandomOption(...options) {
   const randomIndex = Math.floor(Math.random() * options.length);
   return options[randomIndex];
 }
+

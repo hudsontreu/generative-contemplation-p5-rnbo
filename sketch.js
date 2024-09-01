@@ -8,6 +8,7 @@ let currentLine = "";
 let charIndex = 0;
 let startTime = 0;
 const typingDuration = 12000;
+let newTextDelay = 1000;
 let poppy_images = [];
 let currentPoppyIndex = 0;
 let currentRoseIndex = 0;
@@ -163,13 +164,6 @@ function drawState1() {
     freq1.value = map(y, 0, height, 280, 20);
   }
 
-  // Text
-  textFont(srcCodePro);
-  if (frameCount % 600 == 0) {
-    pickRandomLine();
-  }
-
-
    // Selecting image flash/gray state
    if (charIndex < currentLine.length) {
     flash = false;
@@ -179,6 +173,12 @@ function drawState1() {
     grayScale = false;
   }
 
+  // Text typeout logic
+  textFont(srcCodePro);
+  if (frameCount % newTextDelay == 0) {
+    pickRandomLine();
+  }
+  
   let elapsedTime = millis() - startTime;
   charIndex = int(map(elapsedTime, 0, typingDuration, 0, currentLine.length));
 
@@ -190,7 +190,17 @@ function drawState1() {
     textLeading(38);
     text(currentLine.substring(0, charIndex), 145, 1096, 460);
   }
+
   blendMode(BLEND);
+}
+
+
+function pickRandomLine() {
+  if (lines.length > 0) {
+    currentLine = lines[int(random(lines.length))];
+    charIndex = 0;
+    startTime = millis();
+  }
 }
 
 
@@ -210,15 +220,6 @@ function drawState2() {
 }
 
 
-
-
-function pickRandomLine() {
-  if (lines.length > 0) {
-    currentLine = lines[int(random(lines.length))];
-    charIndex = 0;
-    startTime = millis();
-  }
-}
 
 
 function displayRoses() {

@@ -20,6 +20,7 @@ let state = 1;
 let state2StartTime = 0;
 let freq2Set = false;
 let tremRate2Set = false;
+let typingActive = false;
 
 
 async function setupRNBO() {
@@ -49,7 +50,7 @@ async function setupRNBO() {
   freq1.value = 120;
 
   freq2 = mainDevice.parametersById.get("freq2");
-  freq2.value = 275;
+  freq2.value = 274;
 
   gain = mainDevice.parametersById.get("gain");
   gain.value = 100;
@@ -104,12 +105,12 @@ async function setup() {
   freq2 = { value: 80 };
   tremRate = { value: 4 };
   clickTog = { value: 0 };
+  verbMix = { value: 28 };
 }
 
 function draw() {
   if (state === 1) {
     drawState1();
-    displayRoses();
   } else if (state === 2) {
     drawState2();
   }
@@ -119,8 +120,8 @@ function draw() {
 
 // STATE 1
 function drawState1() {
-  background(0, 12);
-
+  background(0, typingActive ? 100 : 38);
+  displayRoses();
 
   // Image flasher state settings
   blendMode(DIFFERENCE);
@@ -128,6 +129,8 @@ function drawState1() {
     currentPoppyIndex = int(random(poppy_images.length));
     lastPoppyChangeTime = millis();
     clickTog.value = 0;
+    verbMix.value = 36;
+    freq2.value = 274;
     if (!tremRate2Set) {
       tremRate.value = random(7, 12);
       tremRate2Set = true;
@@ -142,7 +145,7 @@ function drawState1() {
   if (grayScale) {
     filter(GRAY);
     tremRate.value = 0;
-    verbMix.value = 16;
+    verbMix.value = 60;
     clickTog.value = 1;
     if (!freq2Set) {
       freq2.value = selectRandomOption(320, 400, 440, 480);
@@ -154,18 +157,26 @@ function drawState1() {
   }
 
 
-   // Line
-   xoff += 0.01;
-   for (let x = 0; x <= width; x += 5) {
+   // Lines
+  push();
+  // fill(160, 120, 140);
+  if (typingActive) {
+    fill(255, 0, 0); // Red color while text is typing out
+  } else {
+    fill(255); // White color otherwise
+  }
+  xoff += 0.01;
+  for (let x = 0; x <= width; x += 5) {
     let y = map(noise(xoff), 0, 1, 0, height);
     ellipse(x, y, 5, 5);
-
     downsampler.value = map(y, 0, height, 7, 0);
     freq1.value = map(y, 0, height, 280, 20);
   }
+  pop();
+
 
    // Selecting image flash/gray state
-   if (charIndex < currentLine.length) {
+   if (typingActive) {
     flash = false;
     grayScale = true;
   } else {
@@ -182,16 +193,20 @@ function drawState1() {
   let elapsedTime = millis() - startTime;
   charIndex = int(map(elapsedTime, 0, typingDuration, 0, currentLine.length));
 
-  if (random(1) < 0.85) {
-    fill(255);
-    textSize(24);
-    textAlign(LEFT, TOP);
-    textWrap(WORD);
-    textLeading(38);
-    text(currentLine.substring(0, charIndex), 145, 1096, 460);
-  }
+  // Set typingActive variable to true or false
+  typingActive = charIndex < currentLine.length;
+
+  push();
+  fill(255);
+  textSize(24);
+  textAlign(LEFT, TOP);
+  textWrap(WORD);
+  textLeading(38);
+  text(currentLine.substring(0, charIndex), 145, 1096, 460);
+  pop();
 
   blendMode(BLEND);
+  
 }
 
 
@@ -215,7 +230,7 @@ function drawState2() {
     textAlign(CENTER, CENTER);
     text("who left the door open to nowhere", width / 2, height / 2);
   }
-  downsampler.value = 32;
+  downsampler.value = 8;
   freq2.value = 100;
 }
 

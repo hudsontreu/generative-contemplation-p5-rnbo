@@ -33,6 +33,11 @@ button:hover {
   cursor: pointer;
 }
 
+h3 {
+  margin: 0px;
+  padding: 0px;
+}
+
 .libre-barcode-128-text-regular {
   font-family: "Libre Barcode 128 Text", system-ui;
   font-weight: 400;
@@ -40,7 +45,7 @@ button:hover {
 }
 
 .buttons {
-  margin: 8px 0px 8px 0px;
+  margin: 16px 0px 16px 0px;
   display: flex;
   align-items: center;
   gap: 16px;

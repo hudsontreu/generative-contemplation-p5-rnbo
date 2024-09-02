@@ -14,13 +14,14 @@ let currentPoppyIndex = 0;
 let currentRoseIndex = 0;
 let roseStartTime = 0;
 let lastPoppyChangeTime = 0;
-let flash = false;
-let grayScale = false;
 let state = 1;
 let state2StartTime = 0;
 let freq2Set = false;
 let tremRate2Set = false;
+
+let grayScale = false;
 let typingActive = false;
+let flash = true;
 
 
 async function setupRNBO() {

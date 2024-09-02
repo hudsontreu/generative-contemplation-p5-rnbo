@@ -19,9 +19,14 @@
   </head>
 
   <body>
-    <button onClick="startAudio()" id="start" style="width: 100px; height: 40px; background-color: white;">Start</button>
-    <button onClick="stopAudio()" id="stop" style="width: 100px; height: 40px; background-color: white;">Stop</button>
-    <button onClick="toggleLoop()" id="stop" style="width: 100px; height: 40px; background-color: white;">Toggle Loop</button>
+
+    <div class="buttons">
+      <button onClick="startAudio()" id="start">start sound</button>
+      <!-- <button onClick="stopAudio()" id="stop">Stop</button> -->
+      <button onClick="toggleLoop()" id="stop">play / pause</button>
+      <h3>#3=fullscreen</h3>
+    </div>
+    
     <script src="sketch.js"></script>
   </body>
 </html>

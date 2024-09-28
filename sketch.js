@@ -1,6 +1,6 @@
 let context, freq1, freq2, gain, tremRate, downsampler, clickTog, clickRate, clickLvl, noiseLvl, verbMix;
 let barcodeFont, srcCodePro;
-let xoff = 0;
+let xoff;
 let whisperText = "Voidspire Hallowedshade Etherfall Grimclave Dreadveil Spectroweave Tenebrous Murkmind Eclipsum Voidspire Hallowedshade Etherfall Grimclave Dreadveil Spectroweave Tenebrous Murkmind Eclipsum";
 let lines = [];
 let roses = [];
@@ -22,6 +22,8 @@ let tremRate2Set = false;
 let grayScale = false;
 let typingActive = false;
 let flash = true;
+let canvasWidth;
+let canvasHeight;
 
 
 async function setupRNBO() {
@@ -95,7 +97,9 @@ function preload() {
 
 async function setup() {
   setupRNBO();
-  createCanvas(1080, 1440);
+  createCanvas(windowWidth, windowHeight, WEBGL);
+  canvasWidth = windowWidth;
+  canvasHeight = windowHeight;
   // createCanvas(windowWidth, windowHeight);
   textFont(srcCodePro);
   lines = loadStrings('assets/longText.txt');
@@ -107,6 +111,8 @@ async function setup() {
   tremRate = { value: 4 };
   clickTog = { value: 0 };
   verbMix = { value: 28 };
+
+  xoff = -height/2;
 }
 
 function draw() {
@@ -139,7 +145,7 @@ function drawState1() {
     } 
   } 
   if(!flash){ tremRate2Set = false };
-  image(poppy_images[currentPoppyIndex], 145, 287, 935, 720);
+  image(poppy_images[currentPoppyIndex], 0 + width/12, -height/3, width/3.6, height/1.6);
 
 
   // Still gray state settings
@@ -162,14 +168,14 @@ function drawState1() {
   push();
   // fill(160, 120, 140);
   if (typingActive) {
-    fill(255, 0, 0); // Red color while text is typing out
+    fill(255, 0, 0);
   } else {
-    fill(255); // White color otherwise
+    fill(255);
   }
   xoff += 0.01;
-  for (let x = 0; x <= width; x += 5) {
-    let y = map(noise(xoff), 0, 1, 0, height);
-    ellipse(x, y, 5, 5);
+  for (let x = -width/2; x <= width; x += 5) {
+    let y = map(noise(xoff), 0, 1, -height/2, height/2);
+    ellipse(x, y, 8, 8);
     downsampler.value = map(y, 0, height, 7, 0);
     freq1.value = map(y, 0, height, 280, 20);
   }
@@ -199,14 +205,16 @@ function drawState1() {
 
   push();
   fill(255);
-  textSize(24);
+  textSize(56);
   textAlign(LEFT, TOP);
   textWrap(WORD);
   textLeading(38);
-  text(currentLine.substring(0, charIndex), 145, 1096, 460);
+  text(currentLine.substring(0, charIndex), -canvasWidth/3, -canvasHeight/6, 800, 800);
   pop();
+  textSize(48);
+  text("testing some text here", -canvasWidth/2.2, -canvasHeight/3, 800, 800);
 
-  blendMode(BLEND);
+  // blendMode(BLEND);
   
 }
 
@@ -241,7 +249,7 @@ function drawState2() {
 function displayRoses() {
   let elapsedTime = millis() - roseStartTime;
   if (elapsedTime > currentRoseIndex * 400) {
-    image(roses[currentRoseIndex], 820, 1048 + currentRoseIndex * 120, 120, 120);
+    image(roses[currentRoseIndex], 0, 48 + currentRoseIndex * 120, height/10, height/10);
     if (elapsedTime > (currentRoseIndex + 1) * 400) {
       if (currentRoseIndex < 2) {
         currentRoseIndex++;
